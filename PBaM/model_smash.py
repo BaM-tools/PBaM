@@ -5,6 +5,7 @@ This module defines smash model classes
 from model_abstract import aModel
 import numpy as np
 import smash
+import copy
 from utilities_public import sigmoid
 
 class smash_linearMapping(aModel):
@@ -91,6 +92,6 @@ class smash_linearMapping(aModel):
             k=k+nd
             
         self.model.forward_run(common_options={'verbose':False}) # run smash
-        out=self.model.response.q
+        out=copy.deepcopy(self.model.response.q)
         return out
     
