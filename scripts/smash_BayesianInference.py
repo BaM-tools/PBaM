@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize
 import smash
-from utilities_public import rescale,sigmoidInv,decompose_covariance
+from utilities_public import rescale,sigmoidInv,decompose_covariance, estimate_gamma
 from model_smash import smash_linearMapping
 from inferenceFunk import llfunk_iid_Gaussian, llfunk_iLinear_Gaussian, llfunk_AR1Linear_Gaussian,logLikelihood, logPosterior, minusLogPosterior
 from MCMC import MCMC_AM,MCMC_options
@@ -52,6 +52,7 @@ parvector=np.array([sigmoidInv(200,bounds['cp']),sigmoidInv(60,bounds['ct']),
                     sigmoidInv(2,bounds['kexc']),sigmoidInv(500,bounds['llr']),
                     0.5,0.2,0.5,0.2,0.5,0.2])
 foo=minimize(fun=minusLogPosterior,x0=parvector,args=(qobs,qobs_u,myModel),method='Nelder-Mead')
+foo.success
 start=foo.x
 mcmc=MCMC_AM(logPdf=logPosterior,x0=start,options=MCMC_options(nAdapt=25,nCycles=40),
              Yobs=qobs,Yu=qobs_u,model=myModel)
@@ -103,3 +104,27 @@ plt.plot(comps[ix,0]);plt.show()
 plt.plot(samples[ix,0]);plt.show()
 plt.plot(samples[ix,5],samples[ix,6]);plt.show()
 
+# Estimating structural errors parameters
+ # Start from a reasonably-well calibrated model
+optimize_options = smash.default_optimize_options(model)
+optimize_options["parameters"].extend(["hp", "ht"])
+model.optimize(optimize_options=optimize_options,cost_options={"gauge": "all"})
+qsim=model.response.q
+qobs=model.response_data.q
+qobs[qobs<0]=np.nan # Use nan rather than negative values
+qobs_u=qobs*0.1 #model.u_response_data.q_stdev
+# Verify obs vs. sim
+for i in range(0,qobs.shape[0]):
+    plt.plot(qsim[i],'k-')
+    plt.plot(qobs[i],'k+')
+    plt.show()
+# Estimate gamma
+foo=estimate_gamma(Ysim=qsim,Yobs=qobs,Yu=qobs_u)
+foo.success
+g=foo.x
+# Plot corresponding uncertainty intervals
+for i in range(0,qobs.shape[0]):
+    plt.plot(qsim[i],qobs[i]-qsim[i],'k+')
+    plt.plot(qsim[i],1.96*(g[2*i]+g[2*i+1]*qsim[i]),'k:')
+    plt.plot(qsim[i],-1.96*(g[2*i]+g[2*i+1]*qsim[i]),'k:')
+    plt.show()
