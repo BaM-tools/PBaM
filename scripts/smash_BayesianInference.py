@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize
 import smash
+import copy
 from utilities_public import rescale,sigmoidInv,decompose_covariance, estimate_gamma
 from model_smash import smash_linearMapping
 from inferenceFunk import llfunk_iid_Gaussian, llfunk_iLinear_Gaussian, llfunk_AR1Linear_Gaussian,logLikelihood, logPosterior, minusLogPosterior
@@ -20,7 +21,7 @@ descriptors=np.stack([d1,rescale(d2,(-1,1)),rescale(d3,(-1,1))],axis=2) # rescal
 # Define the descriptors used for each rr_parameter (they don't have to be the same for all rr_parameters)
 D={'cp':descriptors,'ct':descriptors,'kexc':descriptors,'llr':descriptors}
 # Define observed streamflows and uncertainties
-qobs=model.response_data.q
+qobs=copy.copy(model.response_data.q)
 qobs[qobs<0]=np.nan # Use nan rather than negative values
 qobs_u=qobs*0.1 #model.u_response_data.q_stdev
 
@@ -109,18 +110,16 @@ plt.plot(samples[ix,5],samples[ix,6]);plt.show()
 optimize_options = smash.default_optimize_options(model)
 optimize_options["parameters"].extend(["hp", "ht"])
 model.optimize(optimize_options=optimize_options,cost_options={"gauge": "all"})
-qsim=model.response.q
-qobs=model.response_data.q
-qobs[qobs<0]=np.nan # Use nan rather than negative values
-qobs_u=qobs*0.1 #model.u_response_data.q_stdev
+qsim=copy.copy(model.response.q)
 # Verify obs vs. sim
 for i in range(0,qobs.shape[0]):
     plt.plot(qsim[i],'k-')
     plt.plot(qobs[i],'k+')
     plt.show()
 # Estimate gamma
-foo=estimate_gamma(Ysim=qsim,Yobs=qobs,Yu=qobs_u)
+foo=estimate_gamma(Ysim=qsim,Yobs=qobs,Yu=qobs_u, options={'maxiter':10000})
 foo.success
+foo.nit
 g=foo.x
 # Plot corresponding uncertainty intervals
 for i in range(0,qobs.shape[0]):
