@@ -169,5 +169,5 @@ def estimate_gamma(Ysim:np.ndarray,Yobs:np.ndarray,Yu:np.ndarray,
         out=llfunk(gamma=x,Ysim=Ysim,Yobs=Yobs,Yu=Yu)
         return -1*out
     
-    out=minimize(fun=minusFunk,x0=gamma0,args=(llfunk,Ysim,Yobs,Yu),method='Nelder-Mead',**kwargs)
+    out=minimize(fun=minusFunk,x0=gamma0,args=(llfunk,Ysim,Yobs,Yu),**kwargs)
     return out
