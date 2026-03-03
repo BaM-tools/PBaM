@@ -152,13 +152,13 @@ def estimate_gamma(Ysim:np.ndarray,Yobs:np.ndarray,Yu:np.ndarray,
     """   
     if gamma0 is None:
         if llfunk==llfunk_iid_Gaussian:
-            gamma0=np.reshape(np.nanstd(Yobs,axis=1),Yobs.shape[0])
+            gamma0=np.reshape(np.nanstd(Yobs-Ysim,axis=1),Yobs.shape[0])
         elif llfunk==llfunk_iLinear_Gaussian:
-            gamma0=np.reshape(np.dstack((np.nanstd(Yobs,axis=1),
+            gamma0=np.reshape(np.dstack((np.nanstd(Yobs-Ysim,axis=1),
                                          np.zeros(shape=Yobs.shape[0]))),
                                          2*Yobs.shape[0])
         elif llfunk==llfunk_AR1Linear_Gaussian:
-            gamma0=np.reshape(np.dstack((np.nanstd(Yobs,axis=1),
+            gamma0=np.reshape(np.dstack((np.nanstd(Yobs-Ysim,axis=1),
                                          np.zeros(shape=Yobs.shape[0]),
                                          np.zeros(shape=Yobs.shape[0]))),
                                          3*Yobs.shape[0])
